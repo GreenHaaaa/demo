@@ -14,6 +14,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -187,12 +191,26 @@ public class UserController {
 
         return users.count();
     }
-    @RequestMapping(value = "/cc",method = RequestMethod.GET)
-    @CrossOrigin
-    public  @ResponseBody  String t()
+    @RequestMapping(value = "/postPhoto",method = RequestMethod.POST)
+    public @ResponseBody Info postPhoto(@RequestPart("file")MultipartFile file)
     {
-        return "<p>AJAX is not a programming language.</p>\n" +
-                "<p>It is just a technique for creating better and more interactive web applications.</p>";
+        User user = getUser();
+        String fileName = file.getOriginalFilename();
+        String suffixName = fileName.substring(fileName.lastIndexOf("."));
+        StringBuilder path = new StringBuilder();
+        path.append("/usr/local/nginx/html/images/");
+        path.append(user.getName());
+        path.append("/1.");
+        path.append(suffixName);
+        File photo = new File(path.toString());
+        if(!photo.getParentFile().exists()) photo.getParentFile().mkdirs();
+        try{
+            file.transferTo(photo);
+        }catch (IOException e)
+        {
+            return new Info(e.getMessage(),500);
+        }
+        return new Info("success",200);
     }
     @RequestMapping(value = "/getInfoOfCurrentUser",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
     public @ResponseBody UserInfo getInfoOf()
