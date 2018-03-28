@@ -199,8 +199,8 @@ public class UserController {
         String suffixName = fileName.substring(fileName.lastIndexOf("."));
         StringBuilder path = new StringBuilder();
         path.append("/usr/local/nginx/html/images/");
-        path.append(user.getName());
-        path.append("/1.");
+        path.append(user.getWorkNumber());
+        path.append("/1");
         path.append(suffixName);
         File photo = new File(path.toString());
         if(!photo.getParentFile().exists()) photo.getParentFile().mkdirs();
