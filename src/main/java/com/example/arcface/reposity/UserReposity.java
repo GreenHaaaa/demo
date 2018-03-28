@@ -11,4 +11,5 @@ public interface UserReposity extends JpaRepository<User,String>{
     public User findUserByworkNumber(String id);
     public List<User> findAllByRole(String role);
 
+
 }

@@ -11,4 +11,5 @@ import java.util.UUID;
 @Repository
 public interface TaskReposity extends JpaRepository<Task,Long> {
     List<Task> findAllByProject(Project project);
+    List<Task> findAllBySecurityLvLessThanEqual(int lv);
 }

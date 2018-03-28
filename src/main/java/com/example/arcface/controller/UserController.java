@@ -5,6 +5,7 @@ import com.example.arcface.AFR_FSDK_FACEMODEL;
 import com.example.arcface.demo.AFRTest;
 import com.example.arcface.domain.*;
 import com.example.arcface.reposity.*;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -43,7 +45,8 @@ public class UserController {
         this.messageReposity = messageReposity;
         this.projectReposity = projectReposity;
     }
-    public User getUser()
+
+    private User getUser()
     {
         UserDetails userDetails = (UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<User> optionalUser = users.findById(userDetails.getUsername());
@@ -202,10 +205,12 @@ public class UserController {
         path.append(user.getWorkNumber());
         path.append("/1");
         path.append(suffixName);
+
         File photo = new File(path.toString());
         if(!photo.getParentFile().exists()) photo.getParentFile().mkdirs();
         try{
             file.transferTo(photo);
+            Thumbnails.of(photo).size(100,100).toFile(photo);
         }catch (IOException e)
         {
             return new Info(e.getMessage(),500);
@@ -218,5 +223,12 @@ public class UserController {
         return  new UserInfo(getUser());
 
     }
-
+    @RequestMapping(value = "/getCountOfTask",method = RequestMethod.GET)
+    public @ResponseBody
+    int getcount(@RequestParam Long id)
+    {
+        Optional<Task> taskOption = taskReposity.findById(id);
+        if(!taskOption.isPresent()) throw  new SomethingNotFoundExcption("task","task "+id);
+        return taskOption.get().getUsers().size();
+    }
 }
