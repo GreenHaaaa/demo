@@ -5,6 +5,7 @@ import com.example.arcface.demo.AFRTest;
 import com.example.arcface.domain.Info;
 import com.example.arcface.domain.User;
 import com.example.arcface.domain.UserExistException;
+import com.example.arcface.reposity.UserReposity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +25,17 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+//    @Autowired
+//    private UserReposity userReposity;
 
     @RequestMapping(value = "/auth", method = RequestMethod.POST,produces = "application/json",consumes = "application/json")
     public @ResponseBody ResponseEntity<?> createAuthenticationToken(
             @RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException {
-        final String token = authService.login(authenticationRequest.getUsername(), authenticationRequest.getPassword());
 
+
+        final String token = authService.login(authenticationRequest.getUsername(), authenticationRequest.getPassword());
+//        User user = userReposity.findUserByworkNumber(authenticationRequest.getUsername());
+//        if(user.getStatus()==0) return ResponseEntity.ok()
         // Return the token
         return ResponseEntity.ok(new JwtAuthenticationResponse(token));
     }
@@ -49,36 +55,35 @@ public class AuthController {
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public @ResponseBody
     User register(User user,
-                  HttpServletRequest request,
-                  @RequestPart("file") MultipartFile file
+                  HttpServletRequest request
+//                  @RequestPart("file") MultipartFile file
     )throws AuthenticationException
     {
-        if (!file.isEmpty()) {
-            String fileName = file.getOriginalFilename();
-            String suffixName = fileName.substring(fileName.lastIndexOf("."));
-            String filePath = request.getServletContext().getRealPath("Image/"+user.getWorkNumber()+"/");
-            // 解决中文问题，liunx下中文路径，图片显示问题
-            //            // fileName = UUID.randomUUID() + suffixName;
-
-            File dest = new File(filePath + fileName);
-
-//            String
-//            user.setPhoto("Image/"+user.getWorkNumber()+"/"+fileName);
-            if (!dest.getParentFile().exists()) {
-                dest.getParentFile().mkdirs();
-            }
-            try {
-                file.transferTo(dest);
-              System.out.println(dest.getCanonicalPath());
-                user.setFaceFeature(AFRTest.getFeature(dest.getCanonicalPath()));
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+//        if (!file.isEmpty()) {
+//            String fileName = file.getOriginalFilename();
+//            String suffixName = fileName.substring(fileName.lastIndexOf("."));
+//            String filePath = request.getServletContext().getRealPath("Image/"+user.getWorkNumber()+"/");
+//            // 解决中文问题，liunx下中文路径，图片显示问题
+//            //            // fileName = UUID.randomUUID() + suffixName;
+//
+//            File dest = new File(filePath + fileName);
+//
+////            String
+////            user.setPhoto("Image/"+user.getWorkNumber()+"/"+fileName);
+//            if (!dest.getParentFile().exists()) {
+//                dest.getParentFile().mkdirs();
+//            }
+//            try {
+//                file.transferTo(dest);
+//              System.out.println(dest.getCanonicalPath());
+//                user.setFaceFeature(AFRTest.getFeature(dest.getCanonicalPath()));
+//            } catch (IllegalStateException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
         if(authService.register(user)==null) throw  new UserExistException(user.getWorkNumber());
-
         return user;
 
     }

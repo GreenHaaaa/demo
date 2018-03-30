@@ -14,10 +14,11 @@ import com.sun.jna.ptr.FloatByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 public class AFRTest {
-	public static final String    APPID  = "3QWm3PZXzpuPCK8DnGn3UtNNPNdGfTdXadNQ5DPVZ84e";
+	public static final String    APPID  = "3QWm3PZXzpuPCK8DnGn3UtNNPNdGfTdXadNQ5DPVZ84e";//linux_key
 	public static final String FD_SDKKEY = "9tRusSiqtY7N8DEzdfY4RMYPJBMZvXN7jE69SkvKMnvm";
 	public static final String FR_SDKKEY = "9tRusSiqtY7N8DEzdfY4RMYWTacnhQkfNaP9cU4uG3hg";
-//    public static final String    APPID  = "3QWm3PZXzpuPCK8DnGn3UtNVYmtSU6g17KYxS9nCH5Y4";
+
+//    public static final String    APPID  = "3QWm3PZXzpuPCK8DnGn3UtNVYmtSU6g17KYxS9nCH5Y4";//windows_key
 //    public static final String FD_SDKKEY = "DZAoCM2wzUgeT6fBvC5NBra3NY2hzeYbyTQjnnskLsec";
 //    public static final String FR_SDKKEY = "DZAoCM2wzUgeT6fBvC5NBraAXwHsGnevPyZAUnp4daBw";
 	
@@ -30,10 +31,10 @@ public class AFRTest {
 
     public static void  main(String[] args)
     {
-        getFeature("E:\\tools\\2.png");
+        getsimilarity("E:\\tools\\2.png");
     }
 
-    public static float authFromFeatrue(AFR_FSDK_FACEMODEL fsdk_facemodel)
+    public static float authFromFeatrue(AFR_FSDK_FACEMODEL fsdk_facemodel,String path)
     {
         /* init Engine */
         Pointer pFDWorkMem = CLibrary.INSTANCE.malloc(FD_WORKBUF_SIZE);
@@ -74,7 +75,7 @@ public class AFRTest {
         System.out.println(versionFR.BuildDate);
         System.out.println(versionFR.CopyRight);
         ASVLOFFSCREEN inputImgA;
-        inputImgA = loadImage("E:\\tools\\2.png");
+        inputImgA = loadImage(path);
         FaceInfo[] faceInfosA = doFaceDetection(hFDEngine, inputImgA);
         AFR_FSDK_FACEMODEL faceFeatureA = extractFRFeature(hFREngine, inputImgA, faceInfosA[0]);
         FloatByReference fSimilScore = new FloatByReference(0.0f);
@@ -141,8 +142,8 @@ public class AFRTest {
             inputImgA = loadRAWImage(filePathA, yuv_widthA, yuv_heightA, yuv_formatA);
             inputImgB = loadRAWImage(filePathB, yuv_widthB, yuv_heightB, yuv_formatB);
         } else {
-            String filePathA = "args";
-            String filePathB = "E:\\tools\\2.jpg";
+            String filePathA = "C:\\Users\\john\\AppData\\Local\\Temp\\tomcat-docbase.7048494700604918643.8080\\Image\\2222222\\1.jpg";
+            String filePathB = "C:\\1.jpg";
 
             inputImgA = loadImage(filePathA);
             inputImgB = loadImage(filePathB);

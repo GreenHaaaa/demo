@@ -50,6 +50,9 @@ public class User {
     @JsonIgnore
     @Column
     private String role;
+    @Column
+    private int status;
+
     public User()
     {
 
@@ -67,6 +70,15 @@ public class User {
         this.exp  =exp;
         this.company = company;
         this.skills = skills;
+        this.status=0;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 
     public String getWorkNumber() {

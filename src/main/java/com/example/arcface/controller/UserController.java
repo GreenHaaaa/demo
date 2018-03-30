@@ -9,6 +9,8 @@ import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +48,32 @@ public class UserController {
         this.messageReposity = messageReposity;
         this.projectReposity = projectReposity;
     }
-
+    @RequestMapping(value = "/addFeature",method = RequestMethod.POST)
+    public @ResponseBody Info addFeture(@RequestPart("file") MultipartFile file,HttpServletRequest request)
+    {
+        User user = getUser();
+        if (!file.isEmpty()) {
+            String fileName = file.getOriginalFilename();
+            String suffixName = fileName.substring(fileName.lastIndexOf("."));
+            String filePath = request.getServletContext().getRealPath("Image/"+user.getWorkNumber()+"/");
+            File dest = new File(filePath + fileName);
+            if (!dest.getParentFile().exists()) {
+                dest.getParentFile().mkdirs();
+            }
+            try {
+                file.transferTo(dest);
+              System.out.println(dest.getCanonicalPath());
+                user.setFaceFeature(AFRTest.getFeature(dest.getCanonicalPath()));
+            } catch (IllegalStateException e) {
+                e.printStackTrace();return new Info("wrong" ,400);
+            } catch (IOException e) {
+                e.printStackTrace();return new Info("wrong" ,400);
+            }
+        }
+        user.setStatus(1);
+        users.save(user);
+        return new Info("success",200);
+    }
     private User getUser()
     {
         UserDetails userDetails = (UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -53,40 +81,46 @@ public class UserController {
         if(!optionalUser.isPresent()) throw new SomethingNotFoundExcption("","user id");
         return optionalUser.get();
     }
-    @RequestMapping(method = RequestMethod.GET)
-    public Task sava()
-    {
-        User user = (User) users.findById("10001").get();
-        user.setFaceFeature(AFRTest.getFeature("E:\\tools\\2.png"));
-        Task task = new Task(1,user,"测试用任务",1,new Project(),"","",1);
-        Resources resources= new Resources(1);
-        resourceReposity.save(resources);
-        taskReposity.save(task);
-        task.getResourcesSet().add(resources);
-        taskReposity.save(task);
-        users.save(user);
-        return task;
-    }
-    @RequestMapping(value="/auth", method=RequestMethod.GET)
+    @RequestMapping(value="/auth", method=RequestMethod.POST)
     @PreAuthorize("hasRole('admin')")
-     public Float authFeture()
+     public @ResponseBody Info authFeture(@RequestPart("file") MultipartFile file, HttpServletRequest request)
     {
-        User user = (User) users.findById("10000").get();
-        Float s  =(float)1;
+        File dest = null;
+        User user =getUser();
+        if(user.getStatus()==0) return new Info("load you face feture frist",400);
+        if (!file.isEmpty()) {
+            String fileName = file.getOriginalFilename();
+            String suffixName = fileName.substring(fileName.lastIndexOf("."));
+            String filePath = request.getServletContext().getRealPath("Image/"+user.getWorkNumber()+"/");
+             dest = new File(filePath + fileName);
+            if (!dest.getParentFile().exists()) {
+                dest.getParentFile().mkdirs();
+            }
+            try {
+                file.transferTo(dest);
+                System.out.println(dest.getCanonicalPath());
+                user.setFaceFeature(AFRTest.getFeature(dest.getCanonicalPath()));
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Float s  =1f;
         try {
             AFR_FSDK_FACEMODEL facemodel = AFR_FSDK_FACEMODEL.fromByteArray(user.getFaceFeature());
-            s = AFRTest.authFromFeatrue(facemodel);
+            s = AFRTest.authFromFeatrue(facemodel,dest.getCanonicalPath());
         }catch (Exception e)
         {
             e.printStackTrace();
         }
-        return s;
+        System.out.println("相似度"+s);
+        if(s>0.65) return new Info("success",200);
+        return new Info("auth fail",400);
     }
     @RequestMapping(value = "/addmsg",method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
     public @ResponseBody Info addMessagge( @RequestBody Message m1,@RequestParam Long taskid)
     {
-
-
         User user  =getUser();
         /*
         * 这里传递数据格式
@@ -136,8 +170,6 @@ public class UserController {
 
         UserDetails user1= (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user  =users.findById( user1.getUsername()).get();
-//        Project project  =new Project("测试用项目", "部门", 3, "2017-08-05", "2017-08-05", 2);
-//        projectReposity.findById("bc30a51e623238a801623238cd480000");
         task.setTaskPublisher(user);
         task.setTaskStatus(0);
         task.setProject(projectReposity.findById(s).get());
@@ -230,5 +262,15 @@ public class UserController {
         Optional<Task> taskOption = taskReposity.findById(id);
         if(!taskOption.isPresent()) throw  new SomethingNotFoundExcption("task","task "+id);
         return taskOption.get().getUsers().size();
+    }
+    @RequestMapping(value = "/searchTask" ,method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
+    public @ResponseBody
+    ResponseEntity<List<taskInfo>> searchTask(@RequestParam String taskName)
+    {
+//        taskReposity.
+        List<taskInfo> ids = new ArrayList<>();
+        for (Task task:taskReposity.findAllByTasknameLike(taskName))
+            ids.add(new taskInfo(task.getTaskname(),task.getTaskPublisher().getName(),task.getWorkload(),task.getProject().getName(),task.getTaskBegin()+task.getTaskEnd(),task.getSecurityLv()));
+        return new ResponseEntity(ids, HttpStatus.OK);
     }
 }

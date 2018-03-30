@@ -1,8 +1,10 @@
 package com.example.arcface.domain;
 
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.validator.constraints.UniqueElements;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.UUID;
 @Entity
 public class Project {
@@ -12,6 +14,9 @@ public class Project {
     private String id;
     @Column(length = 1000)
     private String projectContent;
+    @UniqueElements
+    @NotNull
+    private String name;
     @Column
     private String department;
     @Column
@@ -28,8 +33,9 @@ public class Project {
     public Project() {
     }
 
-    public Project(String projectContent, String department, int sevurityLv, String projectBegin, String projectEnd, int prokectStatus,User user) {
+    public Project(String name,String projectContent, String department, int sevurityLv, String projectBegin, String projectEnd, int prokectStatus,User user) {
 
+        this.name = name;
         this.projectContent = projectContent;
         this.department = department;
         this.sevurityLv = sevurityLv;
@@ -101,5 +107,13 @@ public class Project {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

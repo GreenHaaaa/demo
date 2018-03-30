@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.GeneratorType;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.UniqueElements;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -14,6 +15,10 @@ public class Task {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private long id ;
+    @Column
+    @NotNull
+    @UniqueElements
+    private String taskname;
     @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "TASK_RESOURCE", joinColumns = {
@@ -48,8 +53,9 @@ public class Task {
     public Task() {
     }
 
-    public Task( int securityLv,User user, String taskContent,int workload,Project project,String taskBegin,String taskEnd,int taskStatus) {
+    public Task( int securityLv,User user,String taskname, String taskContent,int workload,Project project,String taskBegin,String taskEnd,int taskStatus) {
         this.id = 1;
+        this.taskname = taskname;
         this.project = project;
         this.securityLv = securityLv;
         this.taskContent = taskContent;
@@ -146,5 +152,13 @@ public class Task {
 
     public void setTaskStatus(int taskStatus) {
         this.taskStatus = taskStatus;
+    }
+
+    public String getTaskname() {
+        return taskname;
+    }
+
+    public void setTaskname(String taskname) {
+        this.taskname = taskname;
     }
 }
