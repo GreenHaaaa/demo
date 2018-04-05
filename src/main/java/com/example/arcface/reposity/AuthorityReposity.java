@@ -12,5 +12,6 @@ import java.util.List;
 public interface AuthorityReposity extends JpaRepository<Authority,String>{
     List<Authority> findAllByUser(User user);
     List<Authority> findAllByProject(Project project);
+    Authority findAllByUserAndProject(User user,Project project);
 
 }

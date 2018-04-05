@@ -34,16 +34,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService());
     }
-//    @Autowired
-//    public void configureAuthentication(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
-//        authenticationManagerBuilder
-//                // 设置UserDetailsService
-//                .userDetailsService(this.userDetailsService)
-//                // 使用BCrypt进行密码的hash
-//                .passwordEncoder(passwordEncoder());
-//    }
 
-    @Bean
+    @Bean@Override
     protected AuthenticationManager authenticationManager() throws Exception {
         // TODO Auto-generated method stub
         authenticationManagerBuilder
@@ -58,7 +50,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 
-
+    @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 // 由于使用的是JWT，我们这里不需要csrf

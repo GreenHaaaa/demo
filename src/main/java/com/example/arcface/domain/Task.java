@@ -17,8 +17,7 @@ public class Task {
     private long id ;
     @Column
     @NotNull
-    @UniqueElements
-    private String taskname;
+    private String taskName;
     @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "TASK_RESOURCE", joinColumns = {
@@ -53,9 +52,9 @@ public class Task {
     public Task() {
     }
 
-    public Task( int securityLv,User user,String taskname, String taskContent,int workload,Project project,String taskBegin,String taskEnd,int taskStatus) {
+    public Task( int securityLv,User user,String taskName, String taskContent,int workload,Project project,String taskBegin,String taskEnd,int taskStatus) {
         this.id = 1;
-        this.taskname = taskname;
+        this.taskName = taskName;
         this.project = project;
         this.securityLv = securityLv;
         this.taskContent = taskContent;
@@ -154,11 +153,11 @@ public class Task {
         this.taskStatus = taskStatus;
     }
 
-    public String getTaskname() {
-        return taskname;
+    public String getTaskName() {
+        return taskName;
     }
 
-    public void setTaskname(String taskname) {
-        this.taskname = taskname;
+    public void setTaskName(String taskname) {
+        this.taskName = taskname;
     }
 }

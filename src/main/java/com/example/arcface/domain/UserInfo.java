@@ -15,6 +15,7 @@ public class UserInfo {
     private String department;
     private List<String> skills;
     private String company;
+//    private int level;
 
     public UserInfo(String workNumber, List<String> exp, String name, String tel, String email, String offer, String department, List<String> skills) {
         this.workNumber = workNumber;
@@ -38,6 +39,7 @@ public class UserInfo {
         this.exp = Arrays.asList(user.getExp().split("&&"));
         this.skills = Arrays.asList(user.getSkills().split("&&"));
         this.company = user.getCompany();
+//        this.level = lv;
     }
     public String getWorkNumber() {
         return workNumber;
@@ -110,4 +112,12 @@ public class UserInfo {
     public void setCompany(String company) {
         this.company = company;
     }
+
+//    public int getLevel() {
+//        return level;
+//    }
+//
+//    public void setLevel(int level) {
+//        this.level = level;
+//    }
 }

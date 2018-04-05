@@ -2,8 +2,11 @@ package com.example.arcface.controller;
 
 
 import com.example.arcface.AFR_FSDK_FACEMODEL;
+import com.example.arcface.config.constraints.ReturnMessaage;
 import com.example.arcface.demo.AFRTest;
 import com.example.arcface.domain.*;
+import com.example.arcface.domain.VO.TaskInfo;
+import com.example.arcface.domain.VO.UserInfoWithLevel;
 import com.example.arcface.reposity.*;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +21,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletRequest;
-import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+
 
 @Controller
 @RequestMapping(value = "/s")
@@ -34,19 +36,23 @@ import java.util.*;
         allowedHeaders={"x-requested-with", "accept", "authorization", "content-type"},
         exposedHeaders={"access-control-allow-headers", "access-control-allow-methods", "access-control-allow-origin", "access-control-max-age", "X-Frame-Options"})
 public class UserController {
+    private TimeStampReposity timeStampReposity;
     private UserReposity users;
     private ResourceReposity resourceReposity;
     private TaskReposity taskReposity;
     private MessageReposity messageReposity;
     private ProjectReposity projectReposity;
+    private AuthorityReposity authorityReposity;
 
     @Autowired
-    public UserController(UserReposity users, ResourceReposity resourceReposity, TaskReposity taskReposity,MessageReposity messageReposity,ProjectReposity projectReposity) {
+    public UserController(TimeStampReposity timeStampReposity,UserReposity users, ResourceReposity resourceReposity, TaskReposity taskReposity,MessageReposity messageReposity,ProjectReposity projectReposity,AuthorityReposity authorityReposity) {
         this.users = users;
         this.resourceReposity = resourceReposity;
         this.taskReposity = taskReposity;
         this.messageReposity = messageReposity;
         this.projectReposity = projectReposity;
+        this.authorityReposity =authorityReposity;
+        this.timeStampReposity =timeStampReposity;
     }
     @RequestMapping(value = "/addFeature",method = RequestMethod.POST)
     public @ResponseBody Info addFeture(@RequestPart("file") MultipartFile file,HttpServletRequest request)
@@ -81,8 +87,11 @@ public class UserController {
         if(!optionalUser.isPresent()) throw new SomethingNotFoundExcption("","user id");
         return optionalUser.get();
     }
+    private boolean IsAdmin()
+    {
+        return false;
+    }
     @RequestMapping(value="/auth", method=RequestMethod.POST)
-    @PreAuthorize("hasRole('admin')")
      public @ResponseBody Info authFeture(@RequestPart("file") MultipartFile file, HttpServletRequest request)
     {
         File dest = null;
@@ -158,27 +167,52 @@ public class UserController {
         return new UserInfo(user);
     }
     @RequestMapping(value = "/getTaskInfoById",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
-    public @ResponseBody Task getTaskInfo(@RequestParam  long id)
+    public @ResponseBody
+    TaskInfo getTaskInfo(@RequestParam  long id)
     {
         Optional<Task> optionalTask = taskReposity.findById(id);
-        if(!optionalTask.isPresent()) throw new SomethingNotFoundExcption(String.valueOf(id),"task id ");
-        return taskReposity.findById(id).get();
+        if(!optionalTask.isPresent()){ throw new SomethingNotFoundExcption(String.valueOf(id),"task id ");}
+        Task task = optionalTask.get();
+        List<TimeStamp> a = timeStampReposity.findAllByTask(task);
+        List<String> aa = new ArrayList<>();
+        for(TimeStamp timeStamp:a){
+            aa.add(timeStamp.getTime());
+        }
+        return new TaskInfo(aa,task);
     }
-    @RequestMapping(value = "addTask",method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
-    public @ResponseBody Task addTask( @RequestBody Task task,@RequestParam String s)
+    @RequestMapping(value = "/addUserToProject",method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
+    public @ResponseBody ResponseEntity<?> addUserToProject(
+            @RequestBody User user,
+            @RequestParam String s,
+            @RequestParam int lv
+    )
     {
 
-        UserDetails user1= (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user  =users.findById( user1.getUsername()).get();
+        Project project= projectReposity.findById(s).get();
+        Authority authority = authorityReposity.findAllByUserAndProject(getUser(),project);
+        if(authority.getAuthoity()<3) {return new ResponseEntity<>(new Info("can not don this",403),HttpStatus.FORBIDDEN);}
+        Authority authority1 = new Authority(getUser(),project,lv);
+        authorityReposity.save(authority);
+        return new ResponseEntity<>(new Info("success",200),HttpStatus.OK);
+    }
+    @RequestMapping(value = "addTask",method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
+    public @ResponseBody ResponseEntity<?> addTask( @RequestBody Task task,@RequestParam String s)
+    {
+
+        User user  =getUser();
+        Project project= projectReposity.findById(s).get();
+        if(project==null) {return new ResponseEntity<>(new Info("project not found",404),HttpStatus.NOT_FOUND);}
+        Authority authority = authorityReposity.findAllByUserAndProject(user,project);
+        if(authority==null&&authority.getAuthoity()<3){return new ResponseEntity<>(new Info(ReturnMessaage.FORBIDDEN.getName(),403),HttpStatus.FORBIDDEN);}
         task.setTaskPublisher(user);
         task.setTaskStatus(0);
-        task.setProject(projectReposity.findById(s).get());
+        task.setProject(project);
         task.setTaskBegin(LocalDateTime.now().toString());
         Set<User>  userSet = new HashSet<>();
         userSet.add(user);
         task.setUsers(userSet);
         taskReposity.save(task);
-        return  task;
+        return  new ResponseEntity<>(task,HttpStatus.OK);
     }
     @RequestMapping(value = "/setUserToTask",method = RequestMethod.POST)
      public @ResponseBody Info setUsers(@RequestBody UserList userSet,@RequestParam Long taskid)
@@ -209,15 +243,27 @@ public class UserController {
     }
     @RequestMapping(value = "/getUserMsg",method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
     public @ResponseBody
-    List<UserInfo> getUsersMsg(@RequestParam int page)
+    List<UserInfo> getUsersMsg(@RequestParam int page
+//            ,@RequestParam int model
+    )
     {
         Page<User> userPage  =users.findAll( PageRequest.of(page,6));
         List<User> userList = userPage.getContent();
         List<UserInfo> userInfos = new ArrayList<>();
-        for(User a:userList)
-        {
-            userInfos.add(new UserInfo(a));
-        }
+//        List<User> adminUsers = users.findAllByRole("ROLE_DAMIN");
+//        System.out.println(model+" =============================");
+//        if(model==0) {
+            for(User a:userList)
+            {
+                userInfos.add(new UserInfo(a));
+            }
+//        }
+//        if(model==1){s
+//            for(User a:adminUsers)
+//            {
+//                userInfos.add(new UserInfo(a));
+//            }
+//        }
         return userInfos;
     }
     @RequestMapping(value = "/getCountsOfUser",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
@@ -260,17 +306,42 @@ public class UserController {
     int getcount(@RequestParam Long id)
     {
         Optional<Task> taskOption = taskReposity.findById(id);
-        if(!taskOption.isPresent()) throw  new SomethingNotFoundExcption("task","task "+id);
+        if(!taskOption.isPresent()) {throw  new SomethingNotFoundExcption("task","task "+id);}
         return taskOption.get().getUsers().size();
     }
     @RequestMapping(value = "/searchTask" ,method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
     public @ResponseBody
     ResponseEntity<List<taskInfo>> searchTask(@RequestParam String taskName)
     {
-//        taskReposity.
+        User user = getUser();
         List<taskInfo> ids = new ArrayList<>();
-        for (Task task:taskReposity.findAllByTasknameLike(taskName))
-            ids.add(new taskInfo(task.getTaskname(),task.getTaskPublisher().getName(),task.getWorkload(),task.getProject().getName(),task.getTaskBegin()+task.getTaskEnd(),task.getSecurityLv()));
+        for (Task task:taskReposity.findAllByTaskNameLike(taskName))
+        {
+            Authority authority = authorityReposity.findAllByUserAndProject(user,task.getProject());
+            if(authority.getAuthoity()>=task.getSecurityLv())
+            {
+                ids.add(new taskInfo(task.getTaskName(),task.getTaskPublisher().getName(),task.getWorkload(),task.getProject().getName(),task.getTaskBegin()+task.getTaskEnd(),task.getSecurityLv()));
+
+            }
+        }
         return new ResponseEntity(ids, HttpStatus.OK);
+    }
+    @RequestMapping(value = "getUsersOfTask",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
+    public @ResponseBody
+    ResponseEntity<?> getUsersOfTask(@RequestParam Long taskid){
+        Optional<Task> taskOptional = taskReposity.findById(taskid);
+        if(!taskOptional.isPresent()){
+            return  new ResponseEntity(new SomethingNotFoundExcption("task not found",""),HttpStatus.NOT_FOUND);
+        }
+        Task task = taskOptional.get();
+        Set<User> users1 = task.getUsers();
+        List<UserInfo> list = new ArrayList<>();
+        for(User user:users1)
+        {
+            Authority authority = authorityReposity.findAllByUserAndProject(user,task.getProject());
+            list.add(new UserInfoWithLevel(user,authority.getAuthoity()));
+        }
+        return new ResponseEntity<>(list,HttpStatus.OK);
+
     }
 }
