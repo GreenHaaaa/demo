@@ -18,10 +18,8 @@ public class Attendance {
     private String onCardTime;
     @Column
     private  String offCardTime;
-
     public Attendance() {
     }
-
     public Attendance(@NotNull User user, String workDay, String onCardTime, String offCardTime) {
         this.user = user;
         this.workDay = workDay;

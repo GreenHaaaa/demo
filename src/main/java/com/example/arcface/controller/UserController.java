@@ -43,6 +43,8 @@ public class UserController {
     private MessageReposity messageReposity;
     private ProjectReposity projectReposity;
     private AuthorityReposity authorityReposity;
+    private final  static String USER_ROLE="ROLE_USER";
+    private final  static String ADMIN_ROLE="ROLE_ADMIN";
 
     @Autowired
     public UserController(TimeStampReposity timeStampReposity,UserReposity users, ResourceReposity resourceReposity, TaskReposity taskReposity,MessageReposity messageReposity,ProjectReposity projectReposity,AuthorityReposity authorityReposity) {
@@ -84,7 +86,7 @@ public class UserController {
     {
         UserDetails userDetails = (UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<User> optionalUser = users.findById(userDetails.getUsername());
-        if(!optionalUser.isPresent()) throw new SomethingNotFoundExcption("","user id");
+        if(!optionalUser.isPresent()){ throw new SomethingNotFoundExcption("","user id");}
         return optionalUser.get();
     }
     private boolean IsAdmin()
@@ -162,7 +164,7 @@ public class UserController {
     public @ResponseBody UserInfo getUserInfo(@RequestParam String id)
     {
        Optional<User> optionalUser = users.findById(id);
-       if(!optionalUser.isPresent()) throw new SomethingNotFoundExcption(id,"user id");
+       if(!optionalUser.isPresent()) {throw new SomethingNotFoundExcption(id,"user id");}
        User user =  optionalUser.get();
         return new UserInfo(user);
     }
@@ -219,7 +221,7 @@ public class UserController {
     {
 
         Optional<Task> optionalTask = taskReposity.findById(taskid);
-        if(!optionalTask.isPresent()) return  new Info("task not exist with userid "+taskid,404) ;
+        if(!optionalTask.isPresent()){ return  new Info("task not exist with userid "+taskid,404) ;}
         Task task =  optionalTask.get();
         for (User user:userSet.getList())
         {
@@ -244,26 +246,26 @@ public class UserController {
     @RequestMapping(value = "/getUserMsg",method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
     public @ResponseBody
     List<UserInfo> getUsersMsg(@RequestParam int page
-//            ,@RequestParam int model
+            ,@RequestParam int model
     )
     {
-        Page<User> userPage  =users.findAll( PageRequest.of(page,6));
-        List<User> userList = userPage.getContent();
         List<UserInfo> userInfos = new ArrayList<>();
-//        List<User> adminUsers = users.findAllByRole("ROLE_DAMIN");
-//        System.out.println(model+" =============================");
-//        if(model==0) {
+        if(model==0) {
+            Page<User> userPage  =users.findAllByRole( USER_ROLE,PageRequest.of(page,6));
+            List<User> userList = userPage.getContent();
             for(User a:userList)
             {
                 userInfos.add(new UserInfo(a));
             }
-//        }
-//        if(model==1){s
-//            for(User a:adminUsers)
-//            {
-//                userInfos.add(new UserInfo(a));
-//            }
-//        }
+        }
+        if(model==1){
+            Page<User> adminUsers = users.findAllByRole(ADMIN_ROLE,PageRequest.of(page,6));
+            List<User> adminLists = adminUsers.getContent();
+            for(User a:adminLists)
+            {
+                userInfos.add(new UserInfo(a));
+            }
+        }
         return userInfos;
     }
     @RequestMapping(value = "/getCountsOfUser",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
@@ -344,4 +346,5 @@ public class UserController {
         return new ResponseEntity<>(list,HttpStatus.OK);
 
     }
+
 }
