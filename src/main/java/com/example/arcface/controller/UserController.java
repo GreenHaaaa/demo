@@ -89,7 +89,7 @@ public class UserController {
         if(!optionalUser.isPresent()){ throw new SomethingNotFoundExcption("","user id");}
         return optionalUser.get();
     }
-    private boolean IsAdmin()
+    private boolean isAdmin()
     {
         return false;
     }
@@ -328,7 +328,7 @@ public class UserController {
         }
         return new ResponseEntity(ids, HttpStatus.OK);
     }
-    @RequestMapping(value = "getUsersOfTask",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
+    @RequestMapping(value = "/getUsersOfTask",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
     public @ResponseBody
     ResponseEntity<?> getUsersOfTask(@RequestParam Long taskid){
         Optional<Task> taskOptional = taskReposity.findById(taskid);
