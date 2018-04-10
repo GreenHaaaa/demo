@@ -98,7 +98,9 @@ public class UserController {
     {
         File dest = null;
         User user =getUser();
-        if(user.getStatus()==0) return new Info("load you face feture frist",400);
+        if(user.getStatus()==0) {
+            return new Info("load you face feture frist",400);
+        }
         if (!file.isEmpty()) {
             String fileName = file.getOriginalFilename();
             String suffixName = fileName.substring(fileName.lastIndexOf("."));
@@ -126,7 +128,9 @@ public class UserController {
             e.printStackTrace();
         }
         System.out.println("相似度"+s);
-        if(s>0.65) return new Info("success",200);
+        if(s>0.65) {
+            new Info("success",200);
+        }
         return new Info("auth fail",400);
     }
     @RequestMapping(value = "/addmsg",method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
@@ -143,7 +147,9 @@ public class UserController {
         *  无法对读到taskid的值
         */
         System.out.println(m1.getToUser());
-        if(!users.findById(m1.getToUser().getWorkNumber()).isPresent()) return new Info("Touser ID is wrong",400);
+        if(!users.findById(m1.getToUser().getWorkNumber()).isPresent()){
+            return new Info("Touser ID is wrong",400);
+        }
         Message m;
         try{
             m  = new Message(user,m1.getMessageContent(), LocalDateTime.now().toString(),taskReposity.findById(taskid).get(),m1.getToUser());
@@ -231,7 +237,6 @@ public class UserController {
             }
            optionalTask.get().getUsers().add(users.findById(user.getWorkNumber()).get());
         }
-//        task.setUsers(set);
         taskReposity.save(task);
         return  new Info("seuccess",200);
 
@@ -287,7 +292,9 @@ public class UserController {
         path.append(suffixName);
 
         File photo = new File(path.toString());
-        if(!photo.getParentFile().exists()) photo.getParentFile().mkdirs();
+        if(!photo.getParentFile().exists()) {
+            photo.getParentFile().mkdirs();
+        }
         try{
             file.transferTo(photo);
             Thumbnails.of(photo).size(100,100).toFile(photo);

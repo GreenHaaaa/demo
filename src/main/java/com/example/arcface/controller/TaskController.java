@@ -8,16 +8,14 @@ import com.example.arcface.domain.VO.TaskUserDetail;
 import com.example.arcface.reposity.TaskInfoResposity;
 import com.example.arcface.reposity.TaskReposity;
 import com.example.arcface.reposity.UserReposity;
+import com.example.arcface.utils.FileWalkUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +24,7 @@ import java.util.Optional;
 @Controller
 @RequestMapping(value = "/taskdetail")
 public class TaskController {
+    private static final String sourcePath = "/usr/local/nginx/html/images/sources";
     private TaskReposity taskReposity;
     private UserReposity userReposity;
     private TaskInfoResposity taskInfoResposity;
@@ -66,6 +65,13 @@ public class TaskController {
       taskInfoResposity.save(taskInfo);
       return new ResponseEntity(HttpStatus.OK);
     }
-
-
+    @GetMapping(value = "/getFileList")
+    public @ResponseBody ResponseEntity<List<String>> getFileList(@RequestParam Long id)
+    {
+        if(!taskReposity.findById(id).isPresent()){
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        };
+        System.out.println(sourcePath+"/"+id+"/");
+       return new ResponseEntity<>( FileWalkUtil.getFileList(sourcePath+"/"+id+"/"),HttpStatus.OK);
+    }
 }

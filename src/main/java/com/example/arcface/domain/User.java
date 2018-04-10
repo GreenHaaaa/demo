@@ -9,7 +9,9 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -191,5 +193,35 @@ public class User {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User user = (User) o;
+        return getStatus() == user.getStatus() &&
+                Objects.equals(getWorkNumber(), user.getWorkNumber()) &&
+                Objects.equals(getPassword(), user.getPassword()) &&
+                Arrays.equals(getFaceFeature(), user.getFaceFeature()) &&
+                Objects.equals(getTasks(), user.getTasks()) &&
+                Objects.equals(getExp(), user.getExp()) &&
+                Objects.equals(getLastPasswordResetDate(), user.getLastPasswordResetDate()) &&
+                Objects.equals(getName(), user.getName()) &&
+                Objects.equals(getSkills(), user.getSkills()) &&
+                Objects.equals(getCompany(), user.getCompany()) &&
+                Objects.equals(getTel(), user.getTel()) &&
+                Objects.equals(getEmail(), user.getEmail()) &&
+                Objects.equals(getDepartment(), user.getDepartment()) &&
+                Objects.equals(getOffer(), user.getOffer()) &&
+                Objects.equals(getRole(), user.getRole());
+    }
+
+    @Override
+    public int hashCode() {
+
+        int result = Objects.hash(getWorkNumber(), getPassword(), getTasks(), getExp(), getLastPasswordResetDate(), getName(), getSkills(), getCompany(), getTel(), getEmail(), getDepartment(), getOffer(), getRole(), getStatus());
+        result = 31 * result + Arrays.hashCode(getFaceFeature());
+        return result;
     }
 }
