@@ -1,4 +1,6 @@
-package com.example.arcface.domain;
+package com.example.arcface.domain.VO;
+
+import com.example.arcface.domain.Message;
 
 import java.util.ArrayList;
 import java.util.List;

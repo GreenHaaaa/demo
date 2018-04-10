@@ -1,6 +1,7 @@
 package com.example.arcface.controller;
 
 import com.example.arcface.domain.*;
+import com.example.arcface.domain.VO.MsgList;
 import com.example.arcface.reposity.MessageReposity;
 import com.example.arcface.reposity.TaskReposity;
 import com.example.arcface.reposity.UserReposity;

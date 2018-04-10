@@ -6,18 +6,19 @@ import com.example.arcface.config.constraints.ReturnMessaage;
 import com.example.arcface.demo.AFRTest;
 import com.example.arcface.domain.*;
 import com.example.arcface.domain.VO.TaskInfo;
+import com.example.arcface.domain.VO.UserInfo;
 import com.example.arcface.domain.VO.UserInfoWithLevel;
+import com.example.arcface.domain.VO.UserList;
 import com.example.arcface.reposity.*;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -56,6 +57,7 @@ public class UserController {
         this.authorityReposity =authorityReposity;
         this.timeStampReposity =timeStampReposity;
     }
+
     @RequestMapping(value = "/addFeature",method = RequestMethod.POST)
     public @ResponseBody Info addFeture(@RequestPart("file") MultipartFile file,HttpServletRequest request)
     {
@@ -92,6 +94,42 @@ public class UserController {
     private boolean isAdmin()
     {
         return false;
+    }
+    @PostMapping(value = "/getfaceCounts")
+    public @ResponseBody ResponseEntity<Info> getFaceCounts(@RequestPart("file") MultipartFile file, HttpServletRequest request)
+    {
+        File dest = null;
+        User user =getUser();
+        if(user.getStatus()==0) {
+            return new ResponseEntity<>(new Info("load you face feture frist",400),HttpStatus.NOT_FOUND);
+        }
+        if (!file.isEmpty()) {
+            String fileName = file.getOriginalFilename();
+            String suffixName = fileName.substring(fileName.lastIndexOf("."));
+            String filePath = request.getServletContext().getRealPath("Image/"+user.getWorkNumber()+"/");
+            dest = new File(filePath + fileName);
+            if (!dest.getParentFile().exists()) {
+                dest.getParentFile().mkdirs();
+            }
+            try {
+                file.transferTo(dest);
+                System.out.println(dest.getCanonicalPath());
+                user.setFaceFeature(AFRTest.getFeature(dest.getCanonicalPath()));
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        int counts = 0;
+        try {
+            AFR_FSDK_FACEMODEL facemodel = AFR_FSDK_FACEMODEL.fromByteArray(user.getFaceFeature());
+            counts = AFRTest.getMaxFaceNum(dest.getCanonicalPath());
+        }catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return new ResponseEntity<>(new Info("there is "+counts+"people ",200),HttpStatus.OK);
     }
     @RequestMapping(value="/auth", method=RequestMethod.POST)
      public @ResponseBody Info authFeture(@RequestPart("file") MultipartFile file, HttpServletRequest request)
@@ -167,7 +205,8 @@ public class UserController {
         return new Info(e.getItem()+"not exist",400);
     }
     @RequestMapping(value = "/getUserInfoById",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
-    public @ResponseBody UserInfo getUserInfo(@RequestParam String id)
+    public @ResponseBody
+    UserInfo getUserInfo(@RequestParam String id)
     {
        Optional<User> optionalUser = users.findById(id);
        if(!optionalUser.isPresent()) {throw new SomethingNotFoundExcption(id,"user id");}
@@ -223,7 +262,7 @@ public class UserController {
         return  new ResponseEntity<>(task,HttpStatus.OK);
     }
     @RequestMapping(value = "/setUserToTask",method = RequestMethod.POST)
-     public @ResponseBody Info setUsers(@RequestBody UserList userSet,@RequestParam Long taskid)
+     public @ResponseBody Info setUsers(@RequestBody UserList userSet, @RequestParam Long taskid)
     {
 
         Optional<Task> optionalTask = taskReposity.findById(taskid);

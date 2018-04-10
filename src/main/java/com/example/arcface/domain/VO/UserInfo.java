@@ -1,5 +1,6 @@
-package com.example.arcface.domain;
+package com.example.arcface.domain.VO;
 
+import com.example.arcface.domain.User;
 import org.springframework.security.core.parameters.P;
 
 import java.util.Arrays;

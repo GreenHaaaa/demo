@@ -21,7 +21,7 @@ public class AFRTest {
 //    public static final String    APPID  = "3QWm3PZXzpuPCK8DnGn3UtNVYmtSU6g17KYxS9nCH5Y4";//windows_key
 //    public static final String FD_SDKKEY = "DZAoCM2wzUgeT6fBvC5NBra3NY2hzeYbyTQjnnskLsec";
 //    public static final String FR_SDKKEY = "DZAoCM2wzUgeT6fBvC5NBraAXwHsGnevPyZAUnp4daBw";
-	
+//
     public static final int FD_WORKBUF_SIZE = 20 * 1024 * 1024;
     public static final int FR_WORKBUF_SIZE = 40 * 1024 * 1024;
     public static final int MAX_FACE_NUM = 50;
@@ -31,9 +31,33 @@ public class AFRTest {
 
     public static void  main(String[] args)
     {
-        getsimilarity("E:\\tools\\2.png");
+//        getsimilarity("E:\\tools\\2.png");
+        System.out.println(getMaxFaceNum("C:\\Users\\john\\Pictures\\face.jpg"));
     }
 
+    public static Pointer initFDEngine(){
+        Pointer pFDWorkMem = CLibrary.INSTANCE.malloc(FD_WORKBUF_SIZE);
+
+
+        PointerByReference phFDEngine = new PointerByReference();
+        NativeLong ret = AFD_FSDKLibrary.INSTANCE.AFD_FSDK_InitialFaceEngine(APPID, FD_SDKKEY, pFDWorkMem, FD_WORKBUF_SIZE, phFDEngine, _AFD_FSDK_OrientPriority.AFD_FSDK_OPF_0_HIGHER_EXT, 32, MAX_FACE_NUM);
+        if (ret.longValue() != 0) {
+            CLibrary.INSTANCE.free(pFDWorkMem);
+
+            System.out.println(String.format("AFD_FSDK_InitialFaceEngine ret 0x%x",ret.longValue()));
+            System.exit(0);
+        }
+
+        // print FDEngine version
+        Pointer hFDEngine = phFDEngine.getValue();
+        AFD_FSDK_Version versionFD = AFD_FSDKLibrary.INSTANCE.AFD_FSDK_GetVersion(hFDEngine);
+        System.out.println(String.format("%d %d %d %d", versionFD.lCodebase, versionFD.lMajor, versionFD.lMinor, versionFD.lBuild));
+        System.out.println(versionFD.Version);
+        System.out.println(versionFD.BuildDate);
+        System.out.println(versionFD.CopyRight);
+        return hFDEngine;
+
+    }
     public static float authFromFeatrue(AFR_FSDK_FACEMODEL fsdk_facemodel,String path)
     {
         /* init Engine */
@@ -202,41 +226,6 @@ public class AFRTest {
         {
             e.printStackTrace();
         }
-       /*
-       compareFaceSimilarity(hFDEngine, hFREngine, inputImgA, inputImgB
-       FaceInfo[] faceInfosA = doFaceDetection(hFDEngine, inputImgA);
-        if (faceInfosA.length < 1) {
-            System.out.println("no face in Image A ");
-            return 0.0f;
-        }
-
-
-
-        // Extract Face Feature
-        AFR_FSDK_FACEMODEL faceFeatureA = extractFRFeature(hFREngine, inputImgA, faceInfosA[0]);
-        try {
-            System.out.println("Image A Feature is"+faceFeatureA.toByteArray().length);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (faceFeatureA == null) {
-            System.out.println("extract face feature in Image A failed");
-            return 0.0f;
-        }
-
-        AFR_FSDK_FACEMODEL faceFeatureB = extractFRFeature(hFREngine, inputImgB, faceInfosB[0]);
-        try {
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (faceFeatureB == null) {
-            System.out.println("extract face feature in Image B failed");
-            faceFeatureA.freeUnmanaged();
-            return 0.0f;
-        */
-
-
        return new byte[10];
     }
     public static FaceInfo[] doFaceDetection(Pointer hFDEngine, ASVLOFFSCREEN inputImg) {
@@ -292,7 +281,13 @@ public class AFRTest {
             return null;
         }
     }
-
+    public static int  getMaxFaceNum(String path)
+    {
+        ASVLOFFSCREEN inputImg = loadImage(path);
+        Pointer hFDEngine =  initFDEngine();
+        FaceInfo[]  faceInfos = doFaceDetection(hFDEngine,inputImg);
+        return faceInfos.length;
+    }
     public static float compareFaceSimilarity(Pointer hFDEngine, Pointer hFREngine, ASVLOFFSCREEN inputImgA, ASVLOFFSCREEN inputImgB) {
         // Do Face Detect
         FaceInfo[] faceInfosA = doFaceDetection(hFDEngine, inputImgA);
