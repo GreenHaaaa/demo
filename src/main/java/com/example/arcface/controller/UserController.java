@@ -5,10 +5,7 @@ import com.example.arcface.AFR_FSDK_FACEMODEL;
 import com.example.arcface.config.constraints.ReturnMessaage;
 import com.example.arcface.demo.AFRTest;
 import com.example.arcface.domain.*;
-import com.example.arcface.domain.VO.TaskInfo;
-import com.example.arcface.domain.VO.UserInfo;
-import com.example.arcface.domain.VO.UserInfoWithLevel;
-import com.example.arcface.domain.VO.UserList;
+import com.example.arcface.domain.VO.*;
 import com.example.arcface.reposity.*;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +43,9 @@ public class UserController {
     private AuthorityReposity authorityReposity;
     private final  static String USER_ROLE="ROLE_USER";
     private final  static String ADMIN_ROLE="ROLE_ADMIN";
+    private final static String IMAGE_PATH="/usr/local/nginx/html/images/";
+    private final static String SOURCE_PATH="/usr/local/nginx/html/images/temp";
+    private final static String SOURCE_PATH1="C:\\logs";
 
     @Autowired
     public UserController(TimeStampReposity timeStampReposity,UserReposity users, ResourceReposity resourceReposity, TaskReposity taskReposity,MessageReposity messageReposity,ProjectReposity projectReposity,AuthorityReposity authorityReposity) {
@@ -260,6 +260,7 @@ public class UserController {
         task.setUsers(userSet);
         taskReposity.save(task);
         return  new ResponseEntity<>(task,HttpStatus.OK);
+
     }
     @RequestMapping(value = "/setUserToTask",method = RequestMethod.POST)
      public @ResponseBody Info setUsers(@RequestBody UserList userSet, @RequestParam Long taskid)
@@ -310,6 +311,20 @@ public class UserController {
                 userInfos.add(new UserInfo(a));
             }
         }
+        if(model==2)
+        {
+            List<User> userlists = users.findAllByRole(USER_ROLE);
+            for(User user:userlists){
+                userInfos.add(new UserInfo(user));
+            }
+        }
+        if(model==3)
+        {
+            List<User> userList = users.findAllByRole(ADMIN_ROLE);
+            for(User user :userList){
+                userInfos.add(new UserInfo(user));
+            }
+        }
         return userInfos;
     }
     @RequestMapping(value = "/getCountsOfUser",method = RequestMethod.GET,consumes = "application/json",produces = "application/json")
@@ -318,6 +333,31 @@ public class UserController {
 
         return users.count();
     }
+
+    @RequestMapping(value = "/postfile",method = RequestMethod.POST)
+    public @ResponseBody ResponseEntity<Info> postfile(@RequestParam Long id,@RequestPart("file") MultipartFile file){
+        String fileName = file.getOriginalFilename();
+        String suffixName = fileName.substring(fileName.lastIndexOf("."));
+        StringBuilder path = new StringBuilder();
+        path.append(SOURCE_PATH);
+        path.append("/");
+        path.append(id);
+        path.append("/");
+        path.append(fileName);
+        File photo = new File(path.toString());
+        if(!photo.getParentFile().exists()) {
+            photo.getParentFile().mkdirs();
+
+        }
+        try{
+            file.transferTo(photo);
+
+        }catch (IOException e)
+        {
+            return new ResponseEntity<>(new Info(e.getMessage(),502),HttpStatus.BAD_GATEWAY);
+        }
+        return new ResponseEntity<>(new Info("success",200),HttpStatus.OK);
+    }
     @RequestMapping(value = "/postPhoto",method = RequestMethod.POST)
     public @ResponseBody Info postPhoto(@RequestPart("file")MultipartFile file)
     {
@@ -325,7 +365,7 @@ public class UserController {
         String fileName = file.getOriginalFilename();
         String suffixName = fileName.substring(fileName.lastIndexOf("."));
         StringBuilder path = new StringBuilder();
-        path.append("/usr/local/nginx/html/images/");
+        path.append(IMAGE_PATH);
         path.append(user.getWorkNumber());
         path.append("/1");
         path.append(suffixName);
@@ -390,7 +430,5 @@ public class UserController {
             list.add(new UserInfoWithLevel(user,authority.getAuthoity()));
         }
         return new ResponseEntity<>(list,HttpStatus.OK);
-
     }
-
 }

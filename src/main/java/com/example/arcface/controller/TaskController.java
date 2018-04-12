@@ -1,5 +1,6 @@
 package com.example.arcface.controller;
 
+import com.example.arcface.domain.Info;
 import com.example.arcface.domain.SomethingNotFoundExcption;
 import com.example.arcface.domain.TaskUserInfo;
 import com.example.arcface.domain.User;
@@ -17,6 +18,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.Files;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +28,9 @@ import java.util.Optional;
 @RequestMapping(value = "/taskdetail")
 public class TaskController {
     private static final String sourcePath = "/usr/local/nginx/html/images/sources";
+    private static final  String TEMPPATH="/usr/local/nginx/html/images/temp";
+    private final  static String USER_ROLE="ROLE_USER";
+    private final  static String ADMIN_ROLE="ROLE_ADMIN";
     private TaskReposity taskReposity;
     private UserReposity userReposity;
     private TaskInfoResposity taskInfoResposity;
@@ -74,4 +80,24 @@ public class TaskController {
         System.out.println(sourcePath+"/"+id+"/");
        return new ResponseEntity<>( FileWalkUtil.getFileList(sourcePath+"/"+id+"/"),HttpStatus.OK);
     }
+    @GetMapping(value = "/getTempList")
+    public @ResponseBody ResponseEntity<List<String>> getTempList(@RequestParam Long id) {
+        if(!taskReposity.findById(id).isPresent()){
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        };
+        return new ResponseEntity<>( FileWalkUtil.getFileList(TEMPPATH+"/"+id+"/"),HttpStatus.OK);
+
+    }
+    @PostMapping(value = "/reviewed")
+    public @ResponseBody ResponseEntity<Info> reViewed(@RequestParam int isOk,@RequestParam Long id,@RequestParam String filename){
+        User user = getUser();
+        if(user.getRole().equals(ADMIN_ROLE)){
+            if(isOk==1){
+                FileWalkUtil.copyFile(TEMPPATH+"/"+id+"/"+filename,sourcePath+"/"+id+"/"+filename);
+            }
+        }
+        return new ResponseEntity<>(new Info("you are not admin",403),HttpStatus.FORBIDDEN);
+    }
+
+
 }

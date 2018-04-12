@@ -1,6 +1,7 @@
 package com.example.arcface.reposity;
 
 import com.example.arcface.domain.User;
+import com.example.arcface.domain.VO.UserInfo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,6 @@ import java.util.List;
 public interface UserReposity extends JpaRepository<User,String>{
     public User findUserByworkNumber(String id);
     public Page<User> findAllByRole(String role, Pageable pageable);
-
+    List<User> findAllByRole(String role);
 
 }
