@@ -93,7 +93,7 @@ public class TaskController {
         User user = getUser();
         if(user.getRole().equals(ADMIN_ROLE)){
             if(isOk==1){
-                FileWalkUtil.copyFile(TEMPPATH+"/"+id+"/"+filename,sourcePath+"/"+id+"/"+filename);
+                FileWalkUtil.copyFile(sourcePath+"/"+id+"/"+filename,TEMPPATH+"/"+id+"/"+filename);
                 return new ResponseEntity<>(new Info("success",200),HttpStatus.OK);
             }
             return new ResponseEntity<>(new Info("Althrough you not permit it ",200),HttpStatus.OK);
