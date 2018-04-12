@@ -31,7 +31,7 @@ public class FileWalkUtil {
         Path target = Paths.get(targetPath);
         try{
 
-            Files.move(source,target, StandardCopyOption.COPY_ATTRIBUTES,StandardCopyOption.REPLACE_EXISTING);
+            Files.move(source,target);
 
 //        }catch (DirectoryNotEmptyException e){
 //
